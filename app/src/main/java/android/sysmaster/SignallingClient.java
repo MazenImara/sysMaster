@@ -90,8 +90,8 @@ class SignallingClient {
 
             //on create room .
             socket.on("createRoom", args -> {
-                callback.onCreateRoom();
-                createOrJoinRoom(this.roomName);
+                //callback.onCreateRoom();
+                //createOrJoinRoom(this.roomName);
             });
 
             //room is full event
@@ -103,7 +103,9 @@ class SignallingClient {
 
 
             // cmd
-            socket.on("cmd", args -> callback.cmd((String) args[0]));
+            socket.on("cmd", args -> callback.onCmd((String) args[0]));
+
+            socket.on("getRooms", args -> callback.getRooms((JSONObject) args[0]));
 
             //messages - SDP and ICE candidates are transferred through this
             socket.on("message", args -> {
@@ -118,9 +120,9 @@ class SignallingClient {
                         String type = data.getString("type");
                         if (type.equalsIgnoreCase("offer")) {
                             callback.onOfferReceived(data);
-                        } else if (type.equalsIgnoreCase("answer") && isStarted) {
+                        } else if (type.equalsIgnoreCase("answer") ) {
                             callback.onAnswerReceived(data);
-                        } else if (type.equalsIgnoreCase("candidate") && isStarted) {
+                        } else if (type.equalsIgnoreCase("candidate") ) {
                             callback.onIceCandidateReceived(data);
                         }
 
@@ -167,7 +169,23 @@ class SignallingClient {
         }
 
     }
-    
+
+    // send cmd
+    public void cmd(String cmd){
+        socket.emit("cmd", cmd);
+    }
+
+    public void createRoom(){
+        socket.emit("createRoom");
+    }
+
+    public void getRooms(){
+        socket.emit("getRooms");
+    }
+
+    public void leaveRoom(String roomName){
+        socket.emit("leaveRoom", roomName);
+    }
 
 
 
@@ -183,6 +201,8 @@ class SignallingClient {
 
         void onCreateRoom();
 
-        void cmd(String msg);
+        void onCmd(String cmd);
+
+        void getRooms(JSONObject rooms);
     }
 }
