@@ -51,14 +51,12 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     PeerConnection localPeer;
     List<IceServer> iceServers;
     EglBase rootEglBase;
-    boolean gotUserMedia;
-    VideoCapturer videoCapturerAndroid;
     List<PeerConnection.IceServer> peerIceServers = new ArrayList<>();
     TextView chosenRoomTv;
     Bundle extra;
     SignallingClient sc;
     String chosenRoom;
-    Button openCamBtn, closeBtn, switchCamBtn, openSoundBtn;
+    Button openFrontCamBtn, closeBtn, openBackCamBtn, openSoundBtn;
     SurfaceViewRenderer remoteVv;
     VideoRenderer remoteRenderer;
 
@@ -77,14 +75,14 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
         remoteVv = findViewById(R.id.remoteVv);
         rootEglBase = EglBase.create();
         remoteVv.init(rootEglBase.getEglBaseContext(),null);
-        openCamBtn = (Button) findViewById(R.id.openCamBtn);
+        openFrontCamBtn = (Button) findViewById(R.id.openFrontCamBtn);
         closeBtn = (Button) findViewById(R.id.closeBtn);
-        switchCamBtn = (Button) findViewById(R.id.switchCamBtn);
+        openBackCamBtn = (Button) findViewById(R.id.openBackCamBtn);
         openSoundBtn = (Button) findViewById(R.id.openSoundBtn);
-        openCamBtn.setOnClickListener(new View.OnClickListener() {
+        openFrontCamBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                openCam();
+                openFrontCam();
             }
         });
 
@@ -95,10 +93,10 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
             }
         });
 
-        switchCamBtn.setOnClickListener(new View.OnClickListener() {
+        openBackCamBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                switchCam();
+                openBackCam();
             }
         });
 
@@ -120,14 +118,14 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     }
 
     // cmd method
-    public void openCam(){
+    public void openFrontCam(){
         remoteVv.setZOrderMediaOverlay(true);
         openPeerCon();
-        sc.cmd("openCam");
+        sc.cmd("openFrontCam");
         remoteVv.setVisibility(View.VISIBLE);
         closeBtn.setVisibility(View.VISIBLE);
-        switchCamBtn.setVisibility(View.VISIBLE);
-        openCamBtn.setVisibility(View.INVISIBLE);
+        openBackCamBtn.setVisibility(View.INVISIBLE);
+        openFrontCamBtn.setVisibility(View.INVISIBLE);
         openSoundBtn.setVisibility(View.INVISIBLE);
 
     }
@@ -148,17 +146,30 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
         }
         remoteVv.setVisibility(View.INVISIBLE);
         closeBtn.setVisibility(View.INVISIBLE);
-        switchCamBtn.setVisibility(View.INVISIBLE);
+        openBackCamBtn.setVisibility(View.VISIBLE);
         openSoundBtn.setVisibility(View.VISIBLE);
-        openCamBtn.setVisibility(View.VISIBLE);
+        openFrontCamBtn.setVisibility(View.VISIBLE);
     }
 
-    public void switchCam(){
-        sc.cmd("swichCam");
+    public void openBackCam(){
+        remoteVv.setZOrderMediaOverlay(true);
+        openPeerCon();
+        sc.cmd("openBackCam");
+        remoteVv.setVisibility(View.VISIBLE);
+        closeBtn.setVisibility(View.VISIBLE);
+        openBackCamBtn.setVisibility(View.INVISIBLE);
+        openFrontCamBtn.setVisibility(View.INVISIBLE);
+        openSoundBtn.setVisibility(View.INVISIBLE);
     }
 
     public void openSound(){
+        openPeerCon();
         sc.cmd("openSound");
+        remoteVv.setVisibility(View.VISIBLE);
+        closeBtn.setVisibility(View.VISIBLE);
+        openBackCamBtn.setVisibility(View.INVISIBLE);
+        openFrontCamBtn.setVisibility(View.INVISIBLE);
+        openSoundBtn.setVisibility(View.INVISIBLE);
     }
 
     // end cmd method
