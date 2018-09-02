@@ -56,15 +56,17 @@ class SignallingClient {
         if (instance == null) {
             instance = new SignallingClient();
         }
-        if (instance.roomName == null) {
+        //if (instance.roomName == null) {
             //set the room name here
 
-            instance.roomName = android.os.Build.MANUFACTURER + "_" + android.os.Build.MODEL ;
-        }
+        //    instance.roomName = android.os.Build.MANUFACTURER + "_" + android.os.Build.MODEL ;
+        //}
         return instance;
     }
 
-
+    public void setCallback(SignalingInterface signalingInterface){
+        this.callback = signalingInterface;
+    }
     public void init(SignalingInterface signalingInterface , String roomName) {
         this.roomName = roomName;
         this.callback = signalingInterface;
@@ -96,11 +98,6 @@ class SignallingClient {
 
             //room is full event
             socket.on("full", args -> Log.d("SignallingClient", "full call() called with: args = [" + Arrays.toString(args) + "]"));
-
-
-
-
-
 
             // cmd
             socket.on("cmd", args -> callback.onCmd((String) args[0]));
@@ -140,9 +137,9 @@ class SignallingClient {
         socket.emit("create or join", roomName);
     }
 
-    public void emitMessage(String message) {
-        socket.emit("message", message);
-    }
+    //public void emitMessage(String message) {
+    //    socket.emit("message", message);
+    //}
 
     public void emitMessage(SessionDescription message) {
         try {
@@ -186,7 +183,10 @@ class SignallingClient {
     public void leaveRoom(String roomName){
         socket.emit("leaveRoom", roomName);
     }
-
+    public void close() {
+        socket.disconnect();
+        socket.close();
+    }
 
 
     interface SignalingInterface {
@@ -199,7 +199,7 @@ class SignallingClient {
 
         void onCreatedRoom();
 
-        void onCreateRoom();
+       // void onCreateRoom();
 
         void onCmd(String cmd);
 

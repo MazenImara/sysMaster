@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity implements SignallingClient.
         //roomName = "master " + android.os.Build.MANUFACTURER + "_" + android.os.Build.MODEL + "_" + android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
         sc = SignallingClient.getInstance();
         sc.init(this, ""/*roomName*/);
+        sc.getRooms();
         createRoomBtn = (Button) findViewById(R.id.createRoomBtn);
         getRoomsBtn = (Button) findViewById(R.id.getRoomsBtn);
         createRoomBtn.setOnClickListener(new View.OnClickListener() {
@@ -65,18 +66,28 @@ public class MainActivity extends AppCompatActivity implements SignallingClient.
         roomLv.setAdapter(adapter);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        sc.setCallback(this);
+        sc.getRooms();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
     // segnaling interface methods
+
+
+
     @Override
     public void onCreatedRoom() {
         toast("You created the room ");
 
     }
 
-    @Override
-    public void onCreateRoom() {
-        toast("create Room");
 
-    }
     @Override
     public void onOfferReceived(final JSONObject data) {
     }

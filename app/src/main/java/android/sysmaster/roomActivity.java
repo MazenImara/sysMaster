@@ -48,13 +48,6 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     Handler handler;
 
     PeerConnectionFactory peerConnectionFactory;
-    MediaConstraints audioConstraints;
-    MediaConstraints videoConstraints;
-    MediaConstraints sdpConstraints;
-    VideoTrack localVideoTrack;
-    AudioTrack localAudioTrack;
-    VideoSource videoSource;
-    AudioSource audioSource;
     PeerConnection localPeer;
     List<IceServer> iceServers;
     EglBase rootEglBase;
@@ -79,8 +72,11 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
         chosenRoomTv = (TextView) findViewById(R.id.chosenRoomTv);
         chosenRoomTv.setText(chosenRoom);
         sc = SignallingClient.getInstance();
+        sc.setCallback(this);
         sc.createOrJoinRoom(chosenRoom);
-        showToast(chosenRoom);
+        remoteVv = findViewById(R.id.remoteVv);
+        rootEglBase = EglBase.create();
+        remoteVv.init(rootEglBase.getEglBaseContext(),null);
         openCamBtn = (Button) findViewById(R.id.openCamBtn);
         openCamBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -101,22 +97,17 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         sc.leaveRoom(chosenRoom);
+        closeCam();
+        super.onDestroy();
     }
 
     // segnaling interface methods
     @Override
     public void onCreatedRoom() {
-        showToast("You created the room " + gotUserMedia);
-
     }
 
-    @Override
-    public void onCreateRoom() {
-        showToast("create Room");
 
-    }
     @Override
     public void onOfferReceived(final JSONObject data) {
         showToast("Received Offer");
@@ -176,9 +167,6 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
 
     // cmd method
     public void openCam(){
-        rootEglBase = EglBase.create();
-        remoteVv = findViewById(R.id.remoteVv);
-        remoteVv.init(rootEglBase.getEglBaseContext(),null);
         remoteVv.setZOrderMediaOverlay(true);
         openPeerCon();
         sc.cmd("openCam");
@@ -186,6 +174,19 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     }
     public void closeCam(){
         sc.cmd("closeCam");
+        try {
+            if (remoteRenderer != null){
+                remoteRenderer.dispose();
+                remoteRenderer = null;
+            }
+            if (localPeer != null){
+                localPeer.close();
+                localPeer = null;
+            }
+            showToast("clse");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     // end cmd method
@@ -250,20 +251,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
         onTryToStart();
 
     }
-    public void closePeerCon(){
-        try {
-            if (videoCapturerAndroid != null) {
-                videoCapturerAndroid.stopCapture();
-                videoCapturerAndroid = null;
-            }
-            if (localPeer != null){
-                localPeer.close();
-                localPeer = null;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+
 
 
     public void onTryToStart() {
