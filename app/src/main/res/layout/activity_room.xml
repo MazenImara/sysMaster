@@ -22,6 +22,7 @@
         android:layout_width="match_parent"
         android:layout_height="420dp"
         android:layout_marginTop="61dp"
+        android:visibility="invisible"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
     <Button
@@ -36,13 +37,37 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/closeCamBtn"
+        android:id="@+id/closeBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="48dp"
+        android:layout_marginStart="48dp"
+        android:layout_marginTop="488dp"
+        android:text="Close"
+        android:visibility="invisible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/switchCamBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="228dp"
         android:layout_marginStart="228dp"
         android:layout_marginTop="488dp"
-        android:text="Close Cam"
+        android:text="Switch Cam"
+        android:visibility="invisible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/openSoundBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="228dp"
+        android:layout_marginStart="228dp"
+        android:layout_marginTop="488dp"
+        android:text="Open sound"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 </android.support.constraint.ConstraintLayout>

@@ -58,7 +58,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     Bundle extra;
     SignallingClient sc;
     String chosenRoom;
-    Button openCamBtn, closeCamBtn;
+    Button openCamBtn, closeBtn, switchCamBtn, openSoundBtn;
     SurfaceViewRenderer remoteVv;
     VideoRenderer remoteRenderer;
 
@@ -78,6 +78,9 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
         rootEglBase = EglBase.create();
         remoteVv.init(rootEglBase.getEglBaseContext(),null);
         openCamBtn = (Button) findViewById(R.id.openCamBtn);
+        closeBtn = (Button) findViewById(R.id.closeBtn);
+        switchCamBtn = (Button) findViewById(R.id.switchCamBtn);
+        openSoundBtn = (Button) findViewById(R.id.openSoundBtn);
         openCamBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -85,13 +88,27 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
             }
         });
 
-        closeCamBtn = (Button) findViewById(R.id.closeCamBtn);
-        closeCamBtn.setOnClickListener(new View.OnClickListener() {
+        closeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 closeCam();
             }
         });
+
+        switchCamBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                switchCam();
+            }
+        });
+
+        openSoundBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openSound();
+            }
+        });
+
 
     }
 
@@ -101,6 +118,50 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
         closeCam();
         super.onDestroy();
     }
+
+    // cmd method
+    public void openCam(){
+        remoteVv.setZOrderMediaOverlay(true);
+        openPeerCon();
+        sc.cmd("openCam");
+        remoteVv.setVisibility(View.VISIBLE);
+        closeBtn.setVisibility(View.VISIBLE);
+        switchCamBtn.setVisibility(View.VISIBLE);
+        openCamBtn.setVisibility(View.INVISIBLE);
+        openSoundBtn.setVisibility(View.INVISIBLE);
+
+    }
+    public void closeCam(){
+        sc.cmd("closeCam");
+        try {
+            if (remoteRenderer != null){
+                remoteRenderer.dispose();
+                remoteRenderer = null;
+            }
+            if (localPeer != null){
+                localPeer.close();
+                localPeer = null;
+            }
+            showToast("clse");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        remoteVv.setVisibility(View.INVISIBLE);
+        closeBtn.setVisibility(View.INVISIBLE);
+        switchCamBtn.setVisibility(View.INVISIBLE);
+        openSoundBtn.setVisibility(View.VISIBLE);
+        openCamBtn.setVisibility(View.VISIBLE);
+    }
+
+    public void switchCam(){
+        sc.cmd("swichCam");
+    }
+
+    public void openSound(){
+        sc.cmd("openSound");
+    }
+
+    // end cmd method
 
     // segnaling interface methods
     @Override
@@ -164,32 +225,6 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
 
     }
     // end signaling interface mehtod
-
-    // cmd method
-    public void openCam(){
-        remoteVv.setZOrderMediaOverlay(true);
-        openPeerCon();
-        sc.cmd("openCam");
-
-    }
-    public void closeCam(){
-        sc.cmd("closeCam");
-        try {
-            if (remoteRenderer != null){
-                remoteRenderer.dispose();
-                remoteRenderer = null;
-            }
-            if (localPeer != null){
-                localPeer.close();
-                localPeer = null;
-            }
-            showToast("clse");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    // end cmd method
     // help method
 
     public void showToast(final String msg) {
