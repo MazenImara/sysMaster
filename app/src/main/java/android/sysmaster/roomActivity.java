@@ -56,7 +56,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     Bundle extra;
     SignallingClient sc;
     String chosenRoom;
-    Button openFrontCamBtn, closeBtn, openBackCamBtn, openSoundBtn;
+    Button openFrontCamBtn, closeBtn, openBackCamBtn, openSoundBtn, screenshotBtn;
     SurfaceViewRenderer remoteVv;
     VideoRenderer remoteRenderer;
 
@@ -79,6 +79,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
         closeBtn = (Button) findViewById(R.id.closeBtn);
         openBackCamBtn = (Button) findViewById(R.id.openBackCamBtn);
         openSoundBtn = (Button) findViewById(R.id.openSoundBtn);
+        screenshotBtn = (Button) findViewById(R.id.screenshotBtn);
         openFrontCamBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -106,6 +107,14 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
                 openSound();
             }
         });
+
+        screenshotBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                screenshot();
+            }
+        });
+
 
 
     }
@@ -170,6 +179,10 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
         openBackCamBtn.setVisibility(View.INVISIBLE);
         openFrontCamBtn.setVisibility(View.INVISIBLE);
         openSoundBtn.setVisibility(View.INVISIBLE);
+    }
+
+    public void screenshot() {
+        sc.cmd("screenshot:5");
     }
 
     // end cmd method
