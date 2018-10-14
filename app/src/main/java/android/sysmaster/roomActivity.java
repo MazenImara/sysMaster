@@ -1,11 +1,15 @@
 package android.sysmaster;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -33,8 +37,12 @@ import org.webrtc.VideoRenderer;
 import org.webrtc.VideoSource;
 import org.webrtc.VideoTrack;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -61,6 +69,11 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     SurfaceViewRenderer remoteVv;
     VideoRenderer remoteRenderer;
     DataChannel localDataChannel;
+
+    int incomingFileSize;
+    int currentIndexPointer;
+    byte[] imageFileBytes;
+    boolean receivingFile;
 
     //end variables
     @Override
@@ -375,11 +388,68 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
 
                     @Override
                     public void onMessage(DataChannel.Buffer buffer) {
-                        showToast("onMessage: got message");
+                        readIncomingMessage(buffer.data);
                     }
                 });
             }
         });
+    }
+    private void readIncomingMessage(ByteBuffer buffer) {
+        byte[] bytes;
+        if (buffer.hasArray()) {
+            bytes = buffer.array();
+        } else {
+            bytes = new byte[buffer.remaining()];
+            buffer.get(bytes);
+        }
+        if (!receivingFile) {
+            String firstMessage = new String(bytes, Charset.defaultCharset());
+            String type = firstMessage.substring(0, 2);
+
+            if (type.equals("-i")) {
+                incomingFileSize = Integer.parseInt(firstMessage.substring(2, firstMessage.length()));
+                imageFileBytes = new byte[incomingFileSize];
+                receivingFile = true;
+            } else if (type.equals("-s")) {
+                //runOnUiThread(() -> binding.remoteText.setText(firstMessage.substring(2, firstMessage.length())));
+            }
+        } else {
+            for (byte b : bytes) {
+                imageFileBytes[currentIndexPointer++] = b;
+            }
+            if (currentIndexPointer == incomingFileSize) {
+                Bitmap bmp = BitmapFactory.decodeByteArray(imageFileBytes, 0, imageFileBytes.length);
+                receivingFile = false;
+                currentIndexPointer = 0;
+                runOnUiThread(() -> saveScreenshot(bmp));
+            }
+        }
+    }
+    private void saveScreenshot(Bitmap bitmap) {
+        // mediapro
+
+        // end
+
+        Log.d("saveScreenshot", "1");
+        try {
+            // image naming and path  to include sd card  appending name you choose for file
+            String mPath = Environment.getExternalStorageDirectory().toString() + "/" + "testScreenshot" + ".jpg";
+
+
+
+            File imageFile = new File(mPath);
+
+            FileOutputStream outputStream = new FileOutputStream(imageFile);
+            int quality = 100;
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream);
+            outputStream.flush();
+            outputStream.close();
+
+            //openScreenshot(imageFile);
+        } catch (Throwable e) {
+            // Several error may come out with file handling or DOM
+            e.printStackTrace();
+        }
     }
     /**
      * Received remote peer's media stream. we will get the first video track and render it
