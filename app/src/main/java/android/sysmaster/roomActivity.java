@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -44,6 +45,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -426,14 +428,12 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
         }
     }
     private void saveScreenshot(Bitmap bitmap) {
-        // mediapro
-
-        // end
-
         Log.d("saveScreenshot", "1");
         try {
+            Date d = new Date();
+            CharSequence name  = DateFormat.format("MM-dd-yy hh:mm:ss", d.getTime());
             // image naming and path  to include sd card  appending name you choose for file
-            String mPath = Environment.getExternalStorageDirectory().toString() + "/" + "testScreenshot" + ".jpg";
+            String mPath = Environment.getExternalStorageDirectory().toString() + "/" + name.toString() + ".jpg";
 
 
 
