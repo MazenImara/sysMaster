@@ -17,6 +17,7 @@ import org.webrtc.AudioSource;
 import org.webrtc.AudioTrack;
 import org.webrtc.Camera1Enumerator;
 import org.webrtc.CameraEnumerator;
+import org.webrtc.DataChannel;
 import org.webrtc.DefaultVideoDecoderFactory;
 import org.webrtc.DefaultVideoEncoderFactory;
 import org.webrtc.EglBase;
@@ -59,6 +60,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     Button openFrontCamBtn, closeBtn, openBackCamBtn, openSoundBtn, screenshotBtn;
     SurfaceViewRenderer remoteVv;
     VideoRenderer remoteRenderer;
+    DataChannel localDataChannel;
 
     //end variables
     @Override
@@ -182,6 +184,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     }
 
     public void screenshot() {
+        initDataChannel();
         sc.cmd("screenshot:5");
     }
 
@@ -197,11 +200,12 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     public void onOfferReceived(final JSONObject data) {
         showToast("Received Offer");
         runOnUiThread(() -> {
-            if (!SignallingClient.getInstance().isInitiator && !SignallingClient.getInstance().isStarted) {
+            if (!SignallingClient.getInstance().isInitiator && !SignallingClient.getInstance().isStarted || true) {
                 onTryToStart();
             }
 
             try {
+                showToast("set offer");
                 localPeer.setRemoteDescription(new CustomSdpObserver("localSetRemote"), new SessionDescription(SessionDescription.Type.OFFER, data.getString("sdp")));
                 doAnswer();
             } catch (JSONException e) {
@@ -316,7 +320,8 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     public void onTryToStart() {
         runOnUiThread(() -> {
             if ( true ) {
-                createPeerConnection();
+                showToast("onTryToStart");
+                createPeerConnection("");
                 if (true) {
                     //doCall();
                 }
@@ -327,7 +332,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     /**
      * Creating the local peerconnection instance
      */
-    private void createPeerConnection() {
+    private void createPeerConnection(String type) {
         peerIceServers.add(new org.webrtc.PeerConnection.IceServer("turn:" + getserverIp() + ":3478","turn","turn"));
         PeerConnection.RTCConfiguration rtcConfig =
                 new PeerConnection.RTCConfiguration(peerIceServers);
@@ -352,6 +357,27 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
                 super.onAddStream(mediaStream);
                 gotRemoteStream(mediaStream);
 
+            }
+
+            @Override
+            public void onDataChannel(DataChannel dataChannel) {
+
+                dataChannel.registerObserver(new DataChannel.Observer() {
+                    @Override
+                    public void onBufferedAmountChange(long l) {
+
+                    }
+
+                    @Override
+                    public void onStateChange() {
+
+                    }
+
+                    @Override
+                    public void onMessage(DataChannel.Buffer buffer) {
+                        showToast("onMessage: got message");
+                    }
+                });
             }
         });
     }
@@ -422,14 +448,55 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
         });
     }
     private void doAnswer() {
+        showToast("do ansr");
         localPeer.createAnswer(new CustomSdpObserver("localCreateAns") {
             @Override
             public void onCreateSuccess(SessionDescription sessionDescription) {
                 super.onCreateSuccess(sessionDescription);
                 localPeer.setLocalDescription(new CustomSdpObserver("localSetLocal"), sessionDescription);
                 SignallingClient.getInstance().emitMessage(sessionDescription);
+
+                showToast("send back");
             }
         }, new MediaConstraints());
+    }
+
+
+    // webrtc datachannel
+    private void initDataChannel() {
+        PeerConnectionFactory.initialize(
+                PeerConnectionFactory.InitializationOptions.builder(this)
+                        .setEnableInternalTracer(BuildConfig.DEBUG)
+                        .createInitializationOptions()
+        );
+        peerConnectionFactory = new PeerConnectionFactory(null);
+        createPeerConnection("data");
+
+        localDataChannel = localPeer.createDataChannel("sendDataChannel", new DataChannel.Init());
+        localDataChannel.registerObserver(new DataChannel.Observer() {
+            @Override
+            public void onBufferedAmountChange(long l) {
+
+            }
+
+            @Override
+            public void onStateChange() {
+                runOnUiThread(() -> {
+                    if (localDataChannel.state() == DataChannel.State.OPEN) {
+                        //binding.sendButton.setEnabled(true);
+                    } else {
+                        //binding.sendButton.setEnabled(false);
+                    }
+                });
+            }
+
+            @Override
+            public void onMessage(DataChannel.Buffer buffer) {
+                showToast("got screenshot");
+                // Incoming messages, ignore
+                // Only outcoming messages used in this example
+            }
+        });
     }
 
     // end webrtc methods
