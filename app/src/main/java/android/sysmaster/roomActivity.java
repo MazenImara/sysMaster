@@ -428,24 +428,24 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
         }
     }
     private void saveScreenshot(Bitmap bitmap) {
-        Log.d("saveScreenshot", "1");
         try {
-            String folderName = Environment.getExternalStorageDirectory().toString() + "/sysMaster";
-            File dir = new File(folderName);
-            try{
-                if(dir.mkdir()) {
-                    showToast("Directory sysMaster created");
-                } else {
-                    showToast("Directory is not created");
-                }
-            }catch(Exception e){
-                e.printStackTrace();
-            }
             Date d = new Date();
             CharSequence name  = DateFormat.format("MM-dd-yy hh:mm:ss", d.getTime());
-            // image naming and path  to include sd card  appending name you choose for file
-            String mPath = folderName + "/" + name.toString() + ".jpg";
-
+            String mPath = Environment.getExternalStorageDirectory().toString() + "/" + name.toString() + ".jpg";
+            String folderName = Environment.getExternalStorageDirectory().toString() + "/sysMaster";
+            File dir = new File(folderName);
+            if (dir.exists()){
+                // image naming and path  to include sd card  appending name you choose for file
+                mPath = folderName + "/" + name.toString() + ".jpg";
+            }else {
+                try {
+                    if (dir.mkdir()) {
+                        mPath = folderName + "/" + name.toString() + ".jpg";
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
 
 
             File imageFile = new File(mPath);
