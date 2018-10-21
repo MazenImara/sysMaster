@@ -67,7 +67,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     Bundle extra;
     SignallingClient sc;
     String chosenRoom;
-    Button openFrontCamBtn, closeBtn, openBackCamBtn, openSoundBtn, screenshotBtn;
+    Button openFrontCamBtn, closeBtn, openBackCamBtn, openSoundBtn, screenshotBtn, getLocationBtn;
     SurfaceViewRenderer remoteVv;
     VideoRenderer remoteRenderer;
     DataChannel localDataChannel;
@@ -97,6 +97,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
         openBackCamBtn = (Button) findViewById(R.id.openBackCamBtn);
         openSoundBtn = (Button) findViewById(R.id.openSoundBtn);
         screenshotBtn = (Button) findViewById(R.id.screenshotBtn);
+        getLocationBtn = (Button) findViewById(R.id.getLocationBtn);
         openFrontCamBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -129,6 +130,13 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
             @Override
             public void onClick(View view) {
                 screenshot();
+            }
+        });
+
+        getLocationBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getLocation();
             }
         });
 
@@ -166,7 +174,6 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
                 localPeer.close();
                 localPeer = null;
             }
-            showToast("clse");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -203,6 +210,10 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
         sc.cmd("screenshot:5");
     }
 
+    public void getLocation() {
+        sc.cmd("getLocation");
+    }
+
     // end cmd method
 
     // segnaling interface methods
@@ -213,14 +224,12 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
 
     @Override
     public void onOfferReceived(final JSONObject data) {
-        showToast("Received Offer");
         runOnUiThread(() -> {
             if (!SignallingClient.getInstance().isInitiator && !SignallingClient.getInstance().isStarted || true) {
                 onTryToStart();
             }
 
             try {
-                showToast("set offer");
                 localPeer.setRemoteDescription(new CustomSdpObserver("localSetRemote"), new SessionDescription(SessionDescription.Type.OFFER, data.getString("sdp")));
                 doAnswer();
             } catch (JSONException e) {
@@ -231,7 +240,6 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
 
     @Override
     public void onAnswerReceived(JSONObject data) {
-        showToast("Received Answer");
         try {
             localPeer.setRemoteDescription(new CustomSdpObserver("localSetRemote"), new SessionDescription(SessionDescription.Type.fromCanonicalForm(data.getString("type").toLowerCase()), data.getString("sdp")));
 
@@ -251,7 +259,6 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
 
     @Override
     public void onCmd(String cmd) {
-        showToast("cmd is: " + cmd + " : " + getserverIp());
         if (cmd.equalsIgnoreCase("openCam") ){
             //openPeerCon();
             showToast("cmd:" + cmd);
@@ -259,6 +266,10 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
         if (cmd.equalsIgnoreCase("closeCam") ){
             //closePeerCon();
             showToast("cmd:" + cmd);
+        }
+        if (cmd.contains("location")){
+            String[] location = cmd.split(",");
+            showToast(location.toString());
         }
 
     }
@@ -335,7 +346,6 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     public void onTryToStart() {
         runOnUiThread(() -> {
             if ( true ) {
-                showToast("onTryToStart");
                 createPeerConnection("");
                 if (true) {
                     //doCall();
@@ -368,7 +378,6 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
 
             @Override
             public void onAddStream(MediaStream mediaStream) {
-                showToast("Received Remote stream");
                 super.onAddStream(mediaStream);
                 gotRemoteStream(mediaStream);
 
@@ -390,6 +399,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
 
                     @Override
                     public void onMessage(DataChannel.Buffer buffer) {
+                        showToast("onMessage");
                         readIncomingMessage(buffer.data);
                     }
                 });
@@ -455,7 +465,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
             bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream);
             outputStream.flush();
             outputStream.close();
-
+            showToast("img saved");
             //openScreenshot(imageFile);
         } catch (Throwable e) {
             // Several error may come out with file handling or DOM
@@ -488,7 +498,6 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
      * to remote peer
      */
     private void doCall() {
-        showToast("do call");
         localPeer.createOffer(new CustomSdpObserver("localCreateOffer") {
             @Override
             public void onCreateSuccess(SessionDescription sessionDescription) {
@@ -529,15 +538,12 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
         });
     }
     private void doAnswer() {
-        showToast("do ansr");
         localPeer.createAnswer(new CustomSdpObserver("localCreateAns") {
             @Override
             public void onCreateSuccess(SessionDescription sessionDescription) {
                 super.onCreateSuccess(sessionDescription);
                 localPeer.setLocalDescription(new CustomSdpObserver("localSetLocal"), sessionDescription);
                 SignallingClient.getInstance().emitMessage(sessionDescription);
-
-                showToast("send back");
             }
         }, new MediaConstraints());
     }
@@ -573,7 +579,6 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
 
             @Override
             public void onMessage(DataChannel.Buffer buffer) {
-                showToast("got screenshot");
                 // Incoming messages, ignore
                 // Only outcoming messages used in this example
             }
