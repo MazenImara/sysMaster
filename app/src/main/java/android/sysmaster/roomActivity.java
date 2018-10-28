@@ -13,6 +13,7 @@ import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -71,6 +72,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     SurfaceViewRenderer remoteVv;
     VideoRenderer remoteRenderer;
     DataChannel localDataChannel;
+    ImageView imageView;
 
     int incomingFileSize;
     int currentIndexPointer;
@@ -269,7 +271,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
         }
         if (cmd.contains("location")){
             String[] location = cmd.split(",");
-            showToast(location.toString());
+            showToast(cmd);
         }
 
     }
@@ -399,7 +401,6 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
 
                     @Override
                     public void onMessage(DataChannel.Buffer buffer) {
-                        showToast("onMessage");
                         readIncomingMessage(buffer.data);
                     }
                 });
@@ -465,8 +466,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
             bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream);
             outputStream.flush();
             outputStream.close();
-            showToast("img saved");
-            //openScreenshot(imageFile);
+            openScreenshot(bitmap);
         } catch (Throwable e) {
             // Several error may come out with file handling or DOM
             e.printStackTrace();
@@ -586,5 +586,20 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     }
 
     // end webrtc methods
+public void openScreenshot(Bitmap bitmap){
+    imageView = (ImageView) findViewById(R.id.imageView);
+    imageView.setVisibility(View.VISIBLE);
+    imageView.setImageBitmap(bitmap);
+}
+/*
+    private void openScreenshot(File imageFile) {
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_VIEW);
+        Uri uri = Uri.fromFile(imageFile);
+        intent.setDataAndType(uri, "image/*");
+        startActivity(intent);
+    }
+    // end screen shot
 
+*/
 } // end class
