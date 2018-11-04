@@ -261,6 +261,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
 
     @Override
     public void onCmd(String cmd) {
+        showToast(cmd);
         if (cmd.equalsIgnoreCase("openCam") ){
             //openPeerCon();
             showToast("cmd:" + cmd);
@@ -294,7 +295,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
             @Override
             protected String doInBackground(String... strings) {
                 try {
-                    return InetAddress.getByName("bestchoice.live").getHostAddress();
+                    return InetAddress.getByName("signaling.bestchoice.live").getHostAddress();
                 } catch (UnknownHostException e) {
                     e.printStackTrace();
                     return "unknown";
