@@ -76,7 +76,7 @@ class SignallingClient {
             IO.setDefaultHostnameVerifier((hostname, session) -> true);
             IO.setDefaultSSLContext(sslcontext);
             //set the socket.io url here
-            socket = IO.socket("https://bestchoice.live:8888");
+            socket = IO.socket("https://signaling.bestchoice.live");
             socket.connect();
 
             if (!roomName.isEmpty()) {

@@ -3,6 +3,7 @@ package android.sysmaster;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.MediaRecorder;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Handler;
@@ -10,7 +11,6 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.format.DateFormat;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -19,10 +19,6 @@ import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.webrtc.AudioSource;
-import org.webrtc.AudioTrack;
-import org.webrtc.Camera1Enumerator;
-import org.webrtc.CameraEnumerator;
 import org.webrtc.DataChannel;
 import org.webrtc.DefaultVideoDecoderFactory;
 import org.webrtc.DefaultVideoEncoderFactory;
@@ -34,13 +30,12 @@ import org.webrtc.PeerConnection;
 import org.webrtc.PeerConnectionFactory;
 import org.webrtc.SessionDescription;
 import org.webrtc.SurfaceViewRenderer;
-import org.webrtc.VideoCapturer;
 import org.webrtc.VideoRenderer;
-import org.webrtc.VideoSource;
 import org.webrtc.VideoTrack;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -78,6 +73,8 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     int currentIndexPointer;
     byte[] imageFileBytes;
     boolean receivingFile;
+
+    private MediaRecorder mediaRecorder;
 
     //end variables
     @Override
@@ -261,17 +258,11 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
 
     @Override
     public void onCmd(String cmd) {
-        showToast(cmd);
-        if (cmd.equalsIgnoreCase("openCam") ){
-            //openPeerCon();
-            showToast("cmd:" + cmd);
-        }
-        if (cmd.equalsIgnoreCase("closeCam") ){
-            //closePeerCon();
-            showToast("cmd:" + cmd);
-        }
         if (cmd.contains("location")){
             String[] location = cmd.split(",");
+            showToast(cmd);
+        }
+        else {
             showToast(cmd);
         }
 
@@ -383,7 +374,6 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
             public void onAddStream(MediaStream mediaStream) {
                 super.onAddStream(mediaStream);
                 gotRemoteStream(mediaStream);
-
             }
 
             @Override
@@ -439,29 +429,43 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
             }
         }
     }
-    private void saveScreenshot(Bitmap bitmap) {
-        try {
-            Date d = new Date();
-            CharSequence name  = DateFormat.format("MM-dd-yy hh:mm:ss", d.getTime());
-            String mPath = Environment.getExternalStorageDirectory().toString() + "/" + name.toString() + ".jpg";
-            String folderName = Environment.getExternalStorageDirectory().toString() + "/sysMaster";
-            File dir = new File(folderName);
-            if (dir.exists()){
-                // image naming and path  to include sd card  appending name you choose for file
-                mPath = folderName + "/" + name.toString() + ".jpg";
-            }else {
+    private String getFilePath(String folderName1,String ext){
+        String fullFolderPath = "";
+        String folderPath0 = Environment.getExternalStorageDirectory().toString() + "/sysMaster";
+        File dir0 = new File(folderPath0);
+        String folderPath1 = folderPath0 + "/"+ folderName1;
+        File dir1 = new File(folderPath1);
+        if (dir0.exists()){
+            if (dir1.exists()){
+                fullFolderPath = folderPath1;
+            }
+            else {
                 try {
-                    if (dir.mkdir()) {
-                        mPath = folderName + "/" + name.toString() + ".jpg";
+                    if (dir1.mkdir()) {
+                        fullFolderPath = folderPath1;
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-
-
-            File imageFile = new File(mPath);
-
+        }else {
+            try {
+                if (dir0.mkdir()) {
+                    if (dir1.mkdir()) {
+                        fullFolderPath = folderPath1;
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        Date d = new Date();
+        CharSequence fileName  = DateFormat.format("MM-dd-yy hh:mm:ss", d.getTime()).toString() + "." + ext;
+        return fullFolderPath + "/" + fileName;
+    }
+    private void saveScreenshot(Bitmap bitmap) {
+        try {
+            File imageFile = new File(getFilePath("screenshot","jpg"));
             FileOutputStream outputStream = new FileOutputStream(imageFile);
             int quality = 100;
             bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream);
@@ -587,11 +591,38 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     }
 
     // end webrtc methods
-public void openScreenshot(Bitmap bitmap){
-    imageView = (ImageView) findViewById(R.id.imageView);
-    imageView.setVisibility(View.VISIBLE);
-    imageView.setImageBitmap(bitmap);
-}
+    public void openScreenshot(Bitmap bitmap){
+        imageView = (ImageView) findViewById(R.id.imageView);
+        imageView.setVisibility(View.VISIBLE);
+        imageView.setImageBitmap(bitmap);
+    }
+/*
+    private void saveVideoTrack(VideoTrack videoTrack){
+
+    }
+    private void SetUpMediaRecorder() throws IOException {
+        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.Mic);
+        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.Surface);
+        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+
+        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC);
+        mediaRecorder.setOutputFile("");
+        mediaRecorder.setVideoSize(1280, 720);
+
+        mediaRecorder.setVideoFrameRate(30);
+        mediaRecorder.setVideoEncodingBitRate(2000000);
+        //mediaRecorder.setMaxDuration();
+
+        //Set audio bitrate
+        int bitDepth = 16;
+        int sampleRate = 44100;
+        int bitRate = sampleRate * bitDepth;
+        mediaRecorder.setAudioEncodingBitRate(bitRate);
+        mediaRecorder.setAudioSamplingRate(sampleRate);
+        mediaRecorder.prepare();
+    }
+*/
 /*
     private void openScreenshot(File imageFile) {
         Intent intent = new Intent();
