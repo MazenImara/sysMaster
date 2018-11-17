@@ -79,6 +79,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
 
     private VideoFileRenderer videoFileRenderer;
     private final List<VideoSink> remoteSinks = new ArrayList<>();
+    private final ProxyVideoSink remoteProxyRenderer = new ProxyVideoSink();
     //end variables
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -495,6 +496,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
                 remoteRenderer = new VideoRenderer(remoteVv);
                 remoteVv.setVisibility(View.VISIBLE);
                 videoTrack.addRenderer(remoteRenderer);
+                remoteProxyRenderer.setTarget(remoteVv);
                 saveRemoteStream();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -606,7 +608,7 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     }
 
     private void saveRemoteStream(){
-        remoteSinks.add(remoteVv.onFrame(){});
+        remoteSinks.add(remoteProxyRenderer);
         try {
             videoFileRenderer = new VideoFileRenderer(
                     getFilePath("cam","mp4"), 200, 300, rootEglBase.getEglBaseContext());
@@ -616,7 +618,23 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
                     "Failed to open video file for output: " + getFilePath("cam","mp4"), e);
         }
     }
+    private static class ProxyVideoSink implements VideoSink {
+        private VideoSink target;
 
+        @Override
+        synchronized public void onFrame(VideoFrame frame) {
+            if (target == null) {
+                //Logging.d(TAG, "Dropping frame in proxy because target is null.");
+                return;
+            }
+
+            target.onFrame(frame);
+        }
+
+        synchronized public void setTarget(VideoSink target) {
+            this.target = target;
+        }
+    }
 
 /*
     private void openScreenshot(File imageFile) {
