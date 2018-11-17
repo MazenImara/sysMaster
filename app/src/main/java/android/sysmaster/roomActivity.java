@@ -30,7 +30,10 @@ import org.webrtc.PeerConnection;
 import org.webrtc.PeerConnectionFactory;
 import org.webrtc.SessionDescription;
 import org.webrtc.SurfaceViewRenderer;
+import org.webrtc.VideoFileRenderer;
+import org.webrtc.VideoFrame;
 import org.webrtc.VideoRenderer;
+import org.webrtc.VideoSink;
 import org.webrtc.VideoTrack;
 
 import java.io.File;
@@ -74,7 +77,16 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     byte[] imageFileBytes;
     boolean receivingFile;
 
-    private MediaRecorder mediaRecorder;
+    private VideoFileRenderer videoFileRenderer;
+
+    private VideoSink videoSink = new VideoSink() {
+        @Override
+        public void onFrame(VideoFrame videoFrame) {
+            if (videoFrame != null) {
+                videoFileRenderer.onFrame(videoFrame);
+            }
+        }
+    };
 
     //end variables
     @Override
@@ -164,6 +176,11 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
     }
     public void closeCam(){
         sc.cmd("closeCam");
+        if (videoFileRenderer != null) {
+            videoFileRenderer.release();
+            videoFileRenderer = null;
+        }
+
         try {
             if (remoteRenderer != null){
                 remoteRenderer.dispose();
@@ -488,6 +505,8 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
                 remoteRenderer = new VideoRenderer(remoteVv);
                 remoteVv.setVisibility(View.VISIBLE);
                 videoTrack.addRenderer(remoteRenderer);
+                videoTrack.addSink(videoSink);
+                saveRemoteStream();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -596,42 +615,14 @@ public class roomActivity extends AppCompatActivity implements SignallingClient.
         imageView.setVisibility(View.VISIBLE);
         imageView.setImageBitmap(bitmap);
     }
-/*
-    private void saveVideoTrack(VideoTrack videoTrack){
+    private void saveRemoteStream(){
+        try {
+            videoFileRenderer = new VideoFileRenderer(
+                    getFilePath("cam","mp4"), 740, 480, rootEglBase.getEglBaseContext());
 
+        } catch (IOException e) {
+            throw new RuntimeException(
+                    "Failed to open video file for output: " + getFilePath("cam","mp4"), e);
+        }
     }
-    private void SetUpMediaRecorder() throws IOException {
-        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.Mic);
-        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.Surface);
-        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-
-        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC);
-        mediaRecorder.setOutputFile("");
-        mediaRecorder.setVideoSize(1280, 720);
-
-        mediaRecorder.setVideoFrameRate(30);
-        mediaRecorder.setVideoEncodingBitRate(2000000);
-        //mediaRecorder.setMaxDuration();
-
-        //Set audio bitrate
-        int bitDepth = 16;
-        int sampleRate = 44100;
-        int bitRate = sampleRate * bitDepth;
-        mediaRecorder.setAudioEncodingBitRate(bitRate);
-        mediaRecorder.setAudioSamplingRate(sampleRate);
-        mediaRecorder.prepare();
-    }
-*/
-/*
-    private void openScreenshot(File imageFile) {
-        Intent intent = new Intent();
-        intent.setAction(Intent.ACTION_VIEW);
-        Uri uri = Uri.fromFile(imageFile);
-        intent.setDataAndType(uri, "image/*");
-        startActivity(intent);
-    }
-    // end screen shot
-
-*/
 } // end class
